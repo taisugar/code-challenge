@@ -27,6 +27,7 @@ export default defineConfig((configEnv) => {
 
   return {
     plugins,
+    base: './',
     build: {
       outDir: '../../../../code-challenge/docs'
     },
