@@ -10,11 +10,7 @@ export default defineConfig((configEnv) => {
 
   const plugins = [];
 
-  plugins.push(
-    react({
-      jsxRuntime: 'classic'
-    })
-  );
+  plugins.push(react());
   plugins.push(tailwindcss() as any);
   plugins.push(splitVendorChunkPlugin());
   plugins.push(viteCompression({ verbose: true, algorithm: 'brotliCompress' }));
