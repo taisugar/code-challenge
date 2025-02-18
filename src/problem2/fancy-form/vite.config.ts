@@ -32,7 +32,7 @@ export default defineConfig((configEnv) => {
   return {
     plugins,
     build: {
-      outDir: '../../../../code-challenge/build'
+      outDir: '../../../../code-challenge/docs'
     },
     resolve: {
       alias: {
