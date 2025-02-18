@@ -31,6 +31,9 @@ export default defineConfig((configEnv) => {
 
   return {
     plugins,
+    build: {
+      outDir: '../../../../code-challenge/build'
+    },
     resolve: {
       alias: {
         components: resolve(__dirname, 'src', 'components'),
