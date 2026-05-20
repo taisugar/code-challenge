@@ -20,7 +20,7 @@
 
   let searchQuery = $state("");
   let searchInput = $state<HTMLInputElement | undefined>(undefined);
-  let activeIndex = $state(0);
+  let activeIndex = $state(-1);
 
   const filteredTokens = $derived(
     tokens.filter((t) => {
@@ -35,8 +35,8 @@
   );
 
   function clampActiveIndex(index: number) {
-    if (filteredTokens.length === 0) return 0;
-    return Math.max(0, Math.min(index, filteredTokens.length - 1));
+    if (filteredTokens.length === 0) return -1;
+    return Math.max(-1, Math.min(index, filteredTokens.length - 1));
   }
 
   function handleKeyDown(event: KeyboardEvent) {
@@ -46,13 +46,21 @@
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      activeIndex = clampActiveIndex(activeIndex + 1);
+      if (activeIndex >= filteredTokens.length - 1) {
+        activeIndex = 0;
+      } else {
+        activeIndex = activeIndex + 1;
+      }
       return;
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
-      activeIndex = clampActiveIndex(activeIndex - 1);
+      if (activeIndex <= 0) {
+        activeIndex = filteredTokens.length - 1;
+      } else {
+        activeIndex = activeIndex - 1;
+      }
       return;
     }
 
@@ -82,11 +90,11 @@
   $effect(() => {
     if (!isOpen) return;
     if (filteredTokens.length === 0) {
-      activeIndex = 0;
+      activeIndex = -1;
       return;
     }
 
-    if (activeIndex < 0 || activeIndex >= filteredTokens.length) {
+    if (activeIndex >= filteredTokens.length) {
       activeIndex = clampActiveIndex(activeIndex);
     }
   });
@@ -240,7 +248,7 @@
   .token-item {
     width: 100%;
     padding: 14px 18px;
-    border: none;
+    border: 1px solid transparent;
     background: transparent;
     cursor: pointer;
     display: grid;
@@ -249,26 +257,27 @@
     gap: 12px;
     transition:
       background 0.15s ease,
-      transform 0.15s ease;
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
     font-family: inherit;
     border-bottom: 1px solid rgba(148, 163, 184, 0.18);
     text-align: left;
+    box-sizing: border-box;
+    outline: none;
   }
 
   .token-item:hover {
     background: rgba(100, 50, 200, 0.08);
-    transform: translateX(1px);
   }
 
   .token-item.selected {
     background: rgba(100, 50, 200, 0.12);
-    box-shadow: inset 0 0 0 1px rgba(100, 50, 200, 0.18);
+    border-color: rgba(100, 50, 200, 0.18);
   }
 
   .token-item.active {
     background: rgba(100, 50, 200, 0.16);
-    outline: 2px solid rgba(100, 50, 200, 0.35);
-    outline-offset: -2px;
+    border-color: rgba(100, 50, 200, 0.35);
   }
 
   .no-data {
