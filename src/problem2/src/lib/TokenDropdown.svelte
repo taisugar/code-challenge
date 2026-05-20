@@ -20,6 +20,7 @@
 
   let searchQuery = $state("");
   let searchInput = $state<HTMLInputElement | undefined>(undefined);
+  let activeIndex = $state(0);
 
   const filteredTokens = $derived(
     tokens.filter((t) => {
@@ -33,6 +34,43 @@
     }),
   );
 
+  function clampActiveIndex(index: number) {
+    if (filteredTokens.length === 0) return 0;
+    return Math.max(0, Math.min(index, filteredTokens.length - 1));
+  }
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (!isOpen) return;
+    const length = filteredTokens.length;
+    if (length === 0) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      activeIndex = clampActiveIndex(activeIndex + 1);
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      activeIndex = clampActiveIndex(activeIndex - 1);
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const token = filteredTokens[activeIndex];
+      if (token) {
+        handleSelectToken(token);
+      }
+      return;
+    }
+
+    if (event.key === "Escape" || event.key === "Esc") {
+      event.preventDefault();
+      handleClose();
+    }
+  }
+
   function handleSelectToken(token: TypeToken) {
     onSelect?.(token);
   }
@@ -40,6 +78,28 @@
   function handleClose() {
     onClose?.();
   }
+
+  $effect(() => {
+    if (!isOpen) return;
+    if (filteredTokens.length === 0) {
+      activeIndex = 0;
+      return;
+    }
+
+    if (activeIndex < 0 || activeIndex >= filteredTokens.length) {
+      activeIndex = clampActiveIndex(activeIndex);
+    }
+  });
+
+  $effect(() => {
+    if (!isOpen || filteredTokens.length === 0) return;
+    const activeElement = document.getElementById(`token-${activeIndex}`);
+    if (activeElement) {
+      setTimeout(() => {
+        activeElement.scrollIntoView({ block: "nearest", inline: "nearest" });
+      }, 0);
+    }
+  });
 
   $effect(() => {
     if (!isOpen) return;
@@ -68,6 +128,7 @@
     <div
       class="dropdown-content"
       onclick={(e) => e.stopPropagation()}
+      onkeydown={handleKeyDown}
       role="dialog"
       aria-modal="true"
       tabindex={-1}
@@ -79,14 +140,26 @@
         bind:value={searchQuery}
         bind:this={searchInput}
       />
-      <div class="token-list">
+      <div
+        class="token-list"
+        role="listbox"
+        aria-label="Select a token"
+        tabindex={activeIndex >= 0 ? 0 : -1}
+        aria-activedescendant={filteredTokens[activeIndex]
+          ? `token-${activeIndex}`
+          : undefined}
+      >
         {#if filteredTokens.length === 0}
           <div class="no-data">No tokens found</div>
         {:else}
-          {#each filteredTokens as token (token)}
+          {#each filteredTokens as token, index (token)}
             <button
+              id={"token-" + index}
               class="token-item"
               class:selected={token.currency === selectedToken?.currency}
+              class:active={index === activeIndex}
+              role="option"
+              aria-selected={index === activeIndex}
               onclick={() => handleSelectToken(token)}
               type="button"
             >
@@ -157,6 +230,7 @@
   }
 
   .token-list {
+    overflow-x: hidden;
     overflow-y: auto;
     flex: 1;
     display: flex;
@@ -189,6 +263,12 @@
   .token-item.selected {
     background: rgba(100, 50, 200, 0.12);
     box-shadow: inset 0 0 0 1px rgba(100, 50, 200, 0.18);
+  }
+
+  .token-item.active {
+    background: rgba(100, 50, 200, 0.16);
+    outline: 2px solid rgba(100, 50, 200, 0.35);
+    outline-offset: -2px;
   }
 
   .no-data {
